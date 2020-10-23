@@ -73,6 +73,7 @@ void getSA(const string& str)
 			else tg[SA[i]] = tg[SA[i - 1]];
 		}
 		g = tg; // 다음 i + t 적용을 위해 현재 i + t로 g를 업데이트 한다. (예:t=1 정렬된 상태에서 t=2 정렬한다)
+		if (g[SA[n - 1]] == n) break; // t<n이라도 정렬이 다 되었으면 빠져나온다
 	} // for
 }
 
