@@ -5,8 +5,17 @@
 // 내지 못하고 감조차 잡지 못해서 결국 포기한 문제이다.
 // DP문제는 머리가 아주 좋던지 아니면 관련 문제를 많이 외워 두는 수 밖에 없을 거 같다.
 // 이것도 아니고 저것도 아니면 아예 단서에 접근조차 하지 못한다.
-// 설명은 있다가 하고 일단 먼저 풀어보자!
-// 이 문제는 동적 프로그래밍과 deque 2개를 사용해야 풀 수 있는 문제이다.
+// 이 문제는 동적 프로그래밍과 deque 2 가지를 사용해야 풀 수 있는 문제이다.
+// 그리고 2중 for문으로 풀면 O(N^2)이 되어 TLE가 발생한다. 잘 생각해서 하나의 for문과 deque를 활용해서 풀어야 한다.
+// 일단 DP에서 점화식은 DP[i] = max(SUM[i] - SUM[j] + DP[j - 1]) , i - (K + 1) + 1 <= j <= i
+// max 구할 때 sum[i]는 고정이므로 점화식을 다시 쓰면,
+// DP[i] = SUM[i] - min(SUM[j] - DP[j - 1])
+// SUM[j] - DP[j - 1]에서 j를 i로 고정시키면 i에서 i - (K + 1) + 1 범위까지에서 가장 작은 값을 구하면 된다.(K+1 범위에서 가장 작은 값)
+// 즉 앞의 11003 문제에서 deque를 사용하여 최소값 구하는 것과 같은 패턴이다.
+// 식을 전개해서 따져보면 이렇게 된다는 것을 알 수 있다.
+// vector를 사용하지 않고 단순 배열로 구현하면 처리 시간이 좀 더 빨라질 것으로 예상된다.
+// 제한시간 1초 중 64ms(2,800KB)가 소요되었다.
+// 맞은사람 70/76로 상위 92.10%에 rank되었다.
 
 #include "pch.h"
 //#include <cstdio> // NULL
@@ -28,38 +37,28 @@
 
 using namespace std;
 
-typedef pair<int, int> pii;
+typedef pair<long long, int> pli;
 
 int main()
 {
 	int N, K, e;
-	vector<int> sum;
-	vector<int> DP;
-	deque<pii> mydq;
+	long long sum = 0;
+	vector<long long> DP;
+	deque<pli> mydq;
 
 	cin >> N >> K;
-	sum.resize(N + 1, 0);
 	DP.resize(N + 1, 0);
 
-	for (int i = 1; i < K + 1; i++) {
+	long long minval;
+	for (int i = 1; i < N + 1; i++) {
 		cin >> e;
-		sum[i] = sum[i - 1] + e;
-		DP[i] = sum[i];
-		mydq.push_back({ 0, i });
-	}
+		sum += e;
+		minval = sum - DP[i - 1];
+		if (!mydq.empty() && mydq.front().second <= i - K - 1) mydq.pop_front();
+		while (!mydq.empty() && mydq.back().first > minval) mydq.pop_back();
+		mydq.push_back({ minval, i });
 
-	int mm;
-	for (int i = K + 1; i < N + 1; i++) {
-		cin >> e;
-		sum[i] = sum[i - 1] + e;
-		for (int j = i - K + 1; j <= i; j++) {
-			mm = sum[j] - DP[j - 1];
-			if (!mydq.empty() && mydq.front().second <= i - K) mydq.pop_front();
-			while (!mydq.empty() && mydq.back().first > mm) mydq.pop_back();
-
-			mydq.push_back({ mm, i });
-			DP[i] = sum[i] - mydq.front().first;
-		}
+		DP[i] = (i <= K) ? sum : sum - mydq.front().first;
 	}
 	cout << DP[N] << "\n";
 }
