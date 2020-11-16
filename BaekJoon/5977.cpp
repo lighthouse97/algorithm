@@ -16,6 +16,9 @@
 // vector를 사용하지 않고 단순 배열로 구현하면 처리 시간이 좀 더 빨라질 것으로 예상된다.
 // 제한시간 1초 중 64ms(2,800KB)가 소요되었다.
 // 맞은사람 70/76로 상위 92.10%에 rank되었다.
+// --> main에 FAST가 빠져서 추가하였다.
+// 제한시간 1초 중 16ms(2,800KB)가 소요되었다.
+// 맞은사람 8/76로 상위 10.52%에 rank되었다.
 
 #include "pch.h"
 //#include <cstdio> // NULL
@@ -41,6 +44,8 @@ typedef pair<long long, int> pli;
 
 int main()
 {
+	FAST;
+
 	int N, K, e;
 	long long sum = 0;
 	vector<long long> DP;
