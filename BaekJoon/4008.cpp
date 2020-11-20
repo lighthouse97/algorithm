@@ -19,6 +19,11 @@
 // a가 음수라 결국 기울기 증가, max라 R 타입이 된다. 따라서 앞(13263)에서 푼 것과 같은 방식으로 풀면 된다.
 // 제한시간 1초 중 364ms(29,372KB)가 소요되었다.
 // 맞은사람 307/327로 상위 93.88%에 rank되었다.
+// -->
+// x가 계속 증가하므로 이 문제에 한해서 굳이 이분탐색을 쓸 필요없고 그냥 선형탐색하면 된다. 그러면 O(NlogN) -> O(N)으로 줄어든다.
+// 364ms -> 108ms로 3.37배 가량 줄어들었다. 사이즈는 그대로이다.
+// 제한시간 1초 중 108ms(29,372KB)가 소요되었다.
+// 맞은사람 31/327로 상위 9.48%에 rank되었다.
 
 #include "pch.h"
 //#include <cstdio> // NULL
@@ -53,8 +58,9 @@ struct ConvexHull_Trick {
 	int N; // 병사의 수
 	int pos; // ch에서 가리키는 위치
 	int a, b, c;
+	int sofar; // for calcDP2()
 
-	ConvexHull_Trick() : N(0), pos(0), a(0), b(0), c(0) {}
+	ConvexHull_Trick() : N(0), pos(0), a(0), b(0), c(0), sofar(1) {}
 
 	~ConvexHull_Trick()
 	{
@@ -100,6 +106,13 @@ struct ConvexHull_Trick {
 		return ch[lo].b * x + ch[lo].d + d2;
 	}
 
+	ll calcDP2(const int& x) // x가 계속 증가하므로 이분 탐색보다 더 빠른 선형탐색 사용
+	{
+		while (sofar + 1 <= pos && cross(sofar, sofar + 1) < x) sofar++;
+		ll d2 = (1LL) * a * x * x + (1LL) * b * x + c;
+		return ch[sofar].b * x + ch[sofar].d + d2;
+	}
+
 	ll solve()
 	{
 		cin >> N;
@@ -109,7 +122,7 @@ struct ConvexHull_Trick {
 		readData();		
 		insert(SUM[0], DP[0]);
 		for (int i = 1; i < N + 1; i++) {
-			DP[i] = calcDP(SUM[i]);
+			DP[i] = calcDP2(SUM[i]); // use calcDP or calcDP2
 			if (i == N) break;
 			insert(SUM[i], DP[i]);
 		}
