@@ -1007,5 +1007,8 @@
     <ClCompile Include="4008.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="10067.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
