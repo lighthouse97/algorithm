@@ -1,4 +1,4 @@
-// 10067_1.cpp
+// 10067.cpp
 // 수열 나누기
 // Olympiad > Asia-Pacific Informatics Olympiad > APIO 2014 2번
 // 무식하게 그냥 풀면 당연히 O(N^2)으로 TLE가 발생하고 CHT를 이용해서 풀어야 O(NlogN) 또는 O(N)만에
@@ -22,7 +22,7 @@
 //#include <cstdio> // NULL
 //#include <cstdlib> // abs
 #include <iostream>
-#include <iomanip>
+//#include <iomanip>
 //#include <cstring> // memset
 //#include <cmath> // pow, sqrt, fabs
 #include <vector>
@@ -42,10 +42,10 @@ typedef long long ll;
 
 struct ConvexHull_Trick {
 	struct line {
-		ll b, d; // 기울기(b), y 절편(d)
+		ll sl, yi; // 기울기(slope), y 절편(y-intercept)
 		int i; // 수열 자르는 위치
-		line() : b(0), d(0), i(0) {}
-		line(ll a, ll b, int i) : b(a), d(b), i(i) {}
+		line() : sl(0), yi(0), i(0) {}
+		line(ll a, ll b, int i) : sl(a), yi(b), i(i) {}
 	};
 	vector<int> SUM; // 수열의 1부터 i까지의 합
 	vector<vector<ll>> DP;
@@ -53,10 +53,10 @@ struct ConvexHull_Trick {
 	vector<vector<int>> BT; // 수열을 나누는 지점의 back trace
 	int N; // 수열의 수의 갯수
 	int K; // 나누는 횟수
-	int pos; // ch에서 가리키는 위치	
-	int sofar; // for calcDP2()
+	int top; // ch에서 top의 위치	
+	int current; // CHT에서 현재 선택된 line의 index, for calcDP2()
 
-	ConvexHull_Trick() : N(0), K(0), pos(0), sofar(1) {}
+	ConvexHull_Trick() : N(0), K(0), top(0), current(0) {}
 
 	~ConvexHull_Trick()
 	{
@@ -79,79 +79,63 @@ struct ConvexHull_Trick {
 
 	inline int ki(int k) { return k & 0x1; } // even number, odd number
 
-	// 분모가 0이 될 수 있기 때문에 교점을 구하는 나누기를 사용하지 않고 위치 비교만 하였다. // 분모 음수 고려해야 한다.
-	bool IsCrossRightOfCross(const int& l1, const int& l2, const int& l3)
+	// 교점을 구하는 나누기를 사용하지 않고 위치 비교만 하였다.
+	bool CanRemoveLastOne(const line& t_1, const line& t, const line& nb)
 	{
-		ll b1, b2, d1, d2;
-		b1 = ch[l1].b - ch[l2].b;
-		b2 = ch[l2].b - ch[l3].b;
-		d1 = ch[l2].d - ch[l1].d;
-		d2 = ch[l3].d - ch[l2].d;
-		if (b2 < 0) { b2 *= -1; d2 *= -1; } // 분모 음수이면 분자, 분모 각각에 -1 곱하여 분모 양수로 만든다.
-		if (b1 < 0) { b1 *= -1; d1 *= -1; }
-		return d1 * b2 <= d2 * b1;		
+		ll sl1, sl2, yi1, yi2;
+		sl1 = t_1.sl - t.sl;
+		sl2 = t.sl - nb.sl;
+		yi1 = t.yi - t_1.yi;
+		yi2 = nb.yi - t.yi;
+		return yi1 * sl2 <= yi2 * sl1; // 양쪽 다 분모가 -라서 양쪽으로 분모를 곱해주면 부등호 영향없어서 -1 곱하기 처리 할 필요없다.		
 	}
-
-	bool IsXRightOfCross(const int& l1, const int& l2, const int& x)
+	
+	bool CanMoveCurrent(const int& l1, const int& l2, const int& x)
 	{
-		ll d = (ch[l2].d - ch[l1].d);
-		ll b = (ch[l1].b - ch[l2].b);
-		if (b < 0) { b *= -1; d *= -1; }
-		return d <= x * b;
-	}
-
-	int IsParallelLine(const int& l1, const int& l2) // 추가되는 line이 이전 line과 기울기가 같을 때 처리한다.
-	{
-		ll d = (ch[l1].d - ch[l2].d);
-		ll b = (ch[l1].b - ch[l2].b);
-		if (b == 0) return (d > 0) ? l1 : l2; // 기울기 같으면 d가 더 큰거 리턴
-		else return 0; // 기울기 다르면 0 리턴
+		ll y = (ch[l2].yi - ch[l1].yi);
+		ll s = (ch[l1].sl - ch[l2].sl);
+		s *= -1; y *= -1; // 기울기 차이(s)는 항상 -, 부등호로 인해 분자, 분모에 각각 -1 곱해서 분모를 +로 만들어준다. 
+		return y <= x * s;
 	}
 
 	void insert(const int& sum_i, const ll& dp_i, const int& i)
 	{
-		ll bb = (1LL) * sum_i;
-		ll dd = (-1LL) * SUM[N] * sum_i  + dp_i;
-		ch[++pos].b = bb; ch[pos].d = dd; ch[pos].i = i;
-		if (pos > 1) { // 같은 기울기 처리
-			int p = IsParallelLine(pos - 1, pos);
-			if (p) {
-				if (p == pos - 1) pos--;
-				else { ch[pos - 1] = ch[pos]; pos--; }
-			}
+		ll sl = (1LL) * sum_i;
+		ll yi = (-1LL) * SUM[N] * sum_i + dp_i;
+		if (top > 1 && ch[top].sl == sl) { // ch 마지막 직선과 기울기 같을 경우, y절편이 클 경우만 대체된다.  
+			if (yi >= ch[top].sl) { ch[top].yi = yi; ch[top].i = i; }
+			return;
 		}
-		while (pos > 2 && !IsCrossRightOfCross(pos - 2, pos - 1, pos)) {
-			ch[pos - 1] = ch[pos];
-			pos--;
+		while (top > 1 && top >= current && CanRemoveLastOne(ch[top - 1], ch[top], { sl, yi, i })) {
+			ch[top - 1] = ch[top];
+			top--;
 		}
+		ch[++top] = { sl, yi, i };
+		if (!current) current++; // 최초 0일 경우 +1
 	}
 
-	ll calcDP(const int& x, const int& k, const int& i)
+	ll calcDP(const int& x)
 	{
-		while (sofar + 1 <= pos && IsXRightOfCross(sofar, sofar + 1, x)) sofar++;
+		while (current + 1 <= top && CanMoveCurrent(current, current + 1, x)) current++;
 		ll d2 = (1LL) * SUM[N] * x - (1LL) * x * x;
-		BT[k][i] = ch[sofar].i; // for back trace
-		return ch[sofar].b * x + ch[sofar].d + d2;
+		return ch[current].sl * x + ch[current].yi + d2;
 	}	
 
 	void solve_k(const int& k)
 	{
+		top = 0;
+		current = 0;
+		insert(SUM[k-1], DP[ki(k-1)][k-1], k-1);
 		for (int i = k; i < N + 1; i++) {
-			DP[ki(k)][i] = calcDP(SUM[i], k, i);
-			if (i == N) { // 새로운 k를 위해 ch 배열 초기화
-				pos = 0;
-				sofar = 1;
-				insert(SUM[k], DP[ki(k)][k], k);
-			}
-			else
-				insert(SUM[i], DP[ki(k - 1)][i], i);
+			DP[ki(k)][i] = calcDP(SUM[i]);
+			BT[k][i] = ch[current].i; // for back trace
+			insert(SUM[i], DP[ki(k - 1)][i], i);
 		}
 	}
 
 	void solve()
 	{		
 		readData();
-		insert(SUM[0], DP[0][0], 0);
 		for (int k = 1; k < K + 1; k++) {
 			solve_k(k);
 		}
@@ -160,16 +144,15 @@ struct ConvexHull_Trick {
 		int maxi = 0;
 		ll maxv = 0;
 		for (int i = 1; i < N + 1; i++) { // find max value
-			if (maxv <= DP[ki(K)][i]) {
+			if (maxv < DP[ki(K)][i]) {
 				maxv = DP[ki(K)][i];
 				maxi = i;
 			}
 		}
 		vector<int> strace(K + 1, 0);
-		strace[K] = maxi;
-		for (int k = K; k > 1; k--) {
+		for (int k = K; k >= 1; k--) {
+			strace[k] = maxi;
 			maxi = BT[k][maxi];
-			strace[k - 1] = maxi;
 		}				
 		cout << maxv << "\n";
 		for (int i = 1; i < K + 1; i++) cout << strace[i] << " ";
