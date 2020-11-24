@@ -17,6 +17,16 @@
 // SUM[i]가 양의 정수이고 SUM[j]가 단조 증가 하므로 기울기 증가, 최대값이라 R 타입이다.
 // 수열 나누는 최적 지점의 back trace는 BT[K][N] 배열을 만들어 각 원소에서 직전의 최대값의 index를 저장한다.
 // 이후 BT[K][N]  부터 거슬러 올라가면 된다.
+// 자꾸 틀려서 시간이 엄청 많이 걸렸는데 실수했던 부분은 다음과 같다.
+// 1. CanRemoveLastOne()에서 햇갈려서 부호를 반대로 하였다.
+// 2. inseert()에서 yi >= ch[top].yi를 copy/paste 오류로 ch[top].sl로 비교하였다.
+// 3. inseert()에서 while loop 내부에 top--만 있으면 되는데 ch[top-1] = ch[top]를 불필요하게 추가
+// 4. inseert()에서 current는 0부터 시작하면 되는데 1부터 시작하도록 잘못했음
+// 5. solve_k()에서 top의 초기값이 -1인데 0으로 착각!
+// 6. solve()에서 solve_k(k) 앞에 DP[k][]를 0으로 초기화시켜 주어야 하는데 빼먹었음!
+// 7. solve()에서 maxi를 1로 초기화시켜야 하는데 0으로 초기화 잘못했음.
+// 제한시간 2초 중 436ms(86,144KB)가 소요되었다.
+// 맞은사람 56/146로 상위 38.35%에 rank되었다.
 
 #include "pch.h"
 //#include <cstdio> // NULL
@@ -87,7 +97,7 @@ struct ConvexHull_Trick {
 		sl2 = t.sl - nb.sl;
 		yi1 = t.yi - t_1.yi;
 		yi2 = nb.yi - t.yi;
-		return yi1 * sl2 <= yi2 * sl1; // 양쪽 다 분모가 -라서 양쪽으로 분모를 곱해주면 부등호 영향없어서 -1 곱하기 처리 할 필요없다.		
+		return yi1 * sl2 >= yi2 * sl1; // <= 이면 정상적으로 추가, >= 이면 왼쪽이라 제거
 	}
 	
 	bool CanMoveCurrent(const int& l1, const int& l2, const int& x)
@@ -102,16 +112,13 @@ struct ConvexHull_Trick {
 	{
 		ll sl = (1LL) * sum_i;
 		ll yi = (-1LL) * SUM[N] * sum_i + dp_i;
-		if (top > 1 && ch[top].sl == sl) { // ch 마지막 직선과 기울기 같을 경우, y절편이 클 경우만 대체된다.  
-			if (yi >= ch[top].sl) { ch[top].yi = yi; ch[top].i = i; }
+		if (top >= 1 && ch[top].sl == sl) {
+			if (yi >= ch[top].yi) { ch[top].yi = yi; ch[top].i = i; }
 			return;
 		}
-		while (top > 1 && top >= current && CanRemoveLastOne(ch[top - 1], ch[top], { sl, yi, i })) {
-			ch[top - 1] = ch[top];
+		while (top >= 2 && top >= current && CanRemoveLastOne(ch[top - 1], ch[top], { sl, yi, i }))
 			top--;
-		}
-		ch[++top] = { sl, yi, i };
-		if (!current) current++; // 최초 0일 경우 +1
+		ch[++top] = { sl, yi, i };	
 	}
 
 	ll calcDP(const int& x)
@@ -119,29 +126,30 @@ struct ConvexHull_Trick {
 		while (current + 1 <= top && CanMoveCurrent(current, current + 1, x)) current++;
 		ll d2 = (1LL) * SUM[N] * x - (1LL) * x * x;
 		return ch[current].sl * x + ch[current].yi + d2;
-	}	
+	}
 
 	void solve_k(const int& k)
 	{
-		top = 0;
-		current = 0;
-		insert(SUM[k-1], DP[ki(k-1)][k-1], k-1);
+		top = -1;
+		current = 0;	
+		insert(SUM[k - 1], DP[ki(k - 1)][k - 1], k - 1);
 		for (int i = k; i < N + 1; i++) {
 			DP[ki(k)][i] = calcDP(SUM[i]);
-			BT[k][i] = ch[current].i; // for back trace
+			BT[k][i] = ch[current].i;	
 			insert(SUM[i], DP[ki(k - 1)][i], i);
 		}
 	}
 
 	void solve()
-	{		
+	{
 		readData();
 		for (int k = 1; k < K + 1; k++) {
+			DP[ki(k)] = vector<ll>(N + 1, 0);
 			solve_k(k);
 		}
-		
+
 		// back trace the splited location
-		int maxi = 0;
+		int maxi = 1;
 		ll maxv = 0;
 		for (int i = 1; i < N + 1; i++) { // find max value
 			if (maxv < DP[ki(K)][i]) {
@@ -153,7 +161,7 @@ struct ConvexHull_Trick {
 		for (int k = K; k >= 1; k--) {
 			strace[k] = maxi;
 			maxi = BT[k][maxi];
-		}				
+		}
 		cout << maxv << "\n";
 		for (int i = 1; i < K + 1; i++) cout << strace[i] << " ";
 		cout << "\n";
