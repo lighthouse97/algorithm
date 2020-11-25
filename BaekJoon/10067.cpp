@@ -19,6 +19,7 @@
 // 이후 BT[K][N]  부터 거슬러 올라가면 된다.
 // 자꾸 틀려서 시간이 엄청 많이 걸렸는데 실수했던 부분은 다음과 같다.
 // 1. CanRemoveLastOne()에서 햇갈려서 부호를 반대로 하였다.
+// 2. insert()에서 if(top >=1 && ..) 인데 top > 1로 조건을 잘못 표기했다.
 // 2. inseert()에서 yi >= ch[top].yi를 copy/paste 오류로 ch[top].sl로 비교하였다.
 // 3. inseert()에서 while loop 내부에 top--만 있으면 되는데 ch[top-1] = ch[top]를 불필요하게 추가
 // 4. inseert()에서 current는 0부터 시작하면 되는데 1부터 시작하도록 잘못했음
