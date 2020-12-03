@@ -6,16 +6,14 @@
 // 일단 점화식은 다음과 같다.
 // DP[level][i]가 간수 level명까지 i번째 방을 감시할 때의 i번째 방까지의 탈옥 위험도라한다면,
 // DP[level][i] = min(k < i){ DP[level-1][k] + cost(k+1, i) }
-// cost(k, i)는 level 번째 간수가 k+1부터 i까지 방을 감시할 때의 탈옥위험도이다. 따라서,
-// cost(k, i) = (SUM[i] - SUM[k])*(i - k)
+// cost(k, i)는 level 번째 간수가 k부터 i까지 방을 감시할 때의 탈옥위험도이다. 따라서,
+// cost(k, i) = (SUM[i] - SUM[k-1])*(i - k + 1)
 // SUM[i]는 i번째 방까지의 탈옥력 C[i]의 누적합이다.
-// i는 1 ~ N 범위에서부터 시작해서 D&Q로 접근하면 되고 level은 1부터 L까지 loop를 돌린다.
-// cost() 함수가 c(a, c) + c(b, d) <= c(a, d) + c(b, c) 사각부등식을 min값 조건으로 만족하므로 D&Q Optimization을 사용할 수 있다. 
-// 추가 주의할 점
-// 1) 방의 수 : N, 간수 수 : L 일 때, 만일 N <= L 이면(간수가 더 많으면) 볼 것없이 SUM[N]이 정답이다.
-// 2) level마다 D & Q에서 최초 시작 범위의 마지막 값은 level 값과 관계 있는데 마지막 값이 N-(L-level)로 잡는다.
-//    why? 6개의 방, 3명의 간수라면 1번째 간수 계산할때 2, 3번째 간수 몫은 남겨야 하므로 6-(3-1) = 4
-//    2번째 간수 계산할 때 마찬가지로 6-(3-2) = 5, 마지막 3번째 간수 계산할 때 6-(3-3) = 6 이 된다.
+// cost() 함수가 c(a, c) + c(b, d) <= c(a, d) + c(b, c) 사각부등식을 min값 조건으로 만족하므로 D&Q Optimization을 사용할 수 있다.
+// D&Q로 접근할 때, i는 1 ~ L에서 시작, k는 0 ~ L로 시작. 이후는 D&Q rule에 따른다. (--> 잘 따져보면 그렇다!)
+// level(간수)는 2부터 시작한다. level 1에서는 c(1, i)로 초가화 하면 된다.
+// 만일 방의 수보다 간수가 더 많이 주어지면 간수 1명당 방 하나씩 감시하면 되므로 이 때는 계산할 것도 없이 SUM[L]이 답이 된다.
+// 이외의 세부 건들을 소스 지저분해지고 실수의 소지가 많으므로 약간의 시간을 희생해도 그대로 진행한다!!!
 
 #include "pch.h"
 //#include <cstdio> // NULL
@@ -39,16 +37,36 @@
 using namespace std;
 
 typedef long long ll;
-const ll MAXVAL = 99*1e15;
+const ll MAXVAL = 99e15;
 
 int L, G;
 vector<ll> SUM;
 vector <vector<ll>> DP;
-ll answer = MAXVAL;
+
+inline ll cost(int k, int i)
+{
+	return (SUM[i] - SUM[k - 1])*(i - k + 1);
+}
 
 void prison_risk(int level, int start, int end, int left, int right)
 {
-
+	ll risk = 0;
+	ll minv = MAXVAL;
+	int optk = 0;
+	if (start > end) return;
+	int mid = (start + end) >> 1;
+	int lo = left;
+	int hi = min(mid, right);
+	for (int k = lo; k <= hi; k++) {
+		risk = DP[level - 1][k] + cost(k + 1, mid);
+		if (risk < minv) {
+			minv = risk;
+			optk = k;
+		}
+	}
+	DP[level][mid] = minv;
+	prison_risk(level, start, mid - 1, left, optk);
+	prison_risk(level, mid + 1, end, optk, right);
 }
 
 int main()
@@ -64,13 +82,16 @@ int main()
 		SUM[i] = SUM[i - 1] + ci;
 	}
 
-	if (L <= G) { // 방보다 간수가 더 많을 경우
+	if (L <= G) { // 방보다 간수가 같거나 더 많을 경우
 		cout << SUM[L] << "\n";
 		return 0;
 	}
-	for (int level = 1; level < G + 1; level++) {
-		int end = L - (G - level);
-		prison_risk(level, 1, end, )
-	}
 
+	for (int i = 1; i < L + 1; i++) { // level(간수)이 1알 때에는 cost(1, i)를 미리 적용한다.
+		DP[1][i] = cost(1, i);
+	}
+	for (int level = 2; level < G + 1; level++) { // level 2부터 D&Q Optimization을 적용한다.
+		prison_risk(level, 1, L, 0, L);
+	}
+	cout << DP[G][L] << "\n";
 }
