@@ -64,25 +64,25 @@ int main()
 	ll num, sum = 0;
 	vector<ll> count(n, 0);
 	bool fit = false;
-	for (int i = n - 1; i >= 0; i--) {		
+	for (int i = n - 1; i >= 0; i--) {
 		ln = 1 << cube[i].first;
 		if (length >= ln && width >= ln && height >= ln) {
-			num = 1LL * (length / ln) * (width / ln) * (height / ln); // 현재 cube로 최대 몇개 채울수 있는지 계산			
+			num = 1LL * (length / ln) * (width / ln) * (height / ln); // 현재 cube로 최대 몇개 채울수 있는지 계산
 			for (int j = n - 1; j > i; j--) { // 더 작은 큐브로 채울 경우 앞의 큰 큐브에서 채운 만큼 빼준다.
-				ll temp = 1LL << ((cube[j].first - cube[i].first) * 3);				
-				temp *= count[j];				
+				ll temp = 1LL << ((cube[j].first - cube[i].first) * 3);
+				temp *= count[j];
 				num -= temp;
-			}						
+			}
 			fit = (length % ln == 0) && (width % ln == 0) && (height % ln == 0);
 			if (cube[i].second < num) {
 				count[i] = cube[i].second;
 				fit = false; // cube로 딱맞게 채울 수 있지만 cube 갯수 모자라면 역시 fit하지 못하다.
 			}
 			else {
-				count[i] = num;		
+				count[i] = num;
 				if (fit) break; // 특정 cube로 박스가 맞아떨어지면 더 진행 할 필요없다.
-			}			
-		}		
+			}
+		}
 	}
 	for (ll x : count) sum += x;
 	cout << (fit ? sum : -1) << "\n";
