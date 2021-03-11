@@ -9,8 +9,8 @@
 // 그냥 구하는 영역의 점 하나하나마다 순차적으로 fractal 단계별(s, s-1, s-2,... 1)로 좁혀나가면서 가운데 영역이나 아니냐로
 // 구분하여 결과를 0(white) 또는 1(black)로 리턴하기로 한다.
 // fractal 단계 넘어갈 때, 가운데 영역과 각 단계의 좌표변환에 유의해야 한다!!!
-// 제한시간 2초 중 0ms(2,028KB)가 소요되었다.
-// 맞은사람 150/254로 상위 59.05%에 rank되었다.
+// 제한시간 2초 중 0ms(2,016KB)가 소요되었다.
+// 맞은사람 142/254로 상위 55.90%에 rank되었다.
 
 #include "pch.h"
 //#include <cstdio> // NULL
@@ -37,7 +37,6 @@ using namespace std;
 
 int g_N, g_K;
 int g_CS, g_CE; // center area
-int g_ANS[50][50] = { {-1, }, };
 
 int powerk(int n, int k)
 {
