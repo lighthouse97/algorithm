@@ -4,7 +4,8 @@
 // Difference Constraints System and Shortest Path를 이용하는 문제이다.
 // 즉 Difference Constraints System문제인데 Bellman-Ford를 도구로 이용하는 문제이다.
 // 1) 두 지점 x, y에 대해 s(x)는 0에서 x지점까지의 합이고 s(y)는 0에서 y지점까지의 합일 때, Probe[x, y] = w는 
-//    s(y) - s(x-1) = w로 표시할 수 있고, 이는 s(y) <= s(x-1) + w AND s(x-1) <= x(y) - w 로 나타낼 수 있다.
+//    s(y) - s(x-1) = w로 표시할 수 있고, 이는 s(y) <= s(x-1) + w AND s(x-1) <= s(y) - w 로 나타낼 수 있다.
+//    (간단히 말해, s(y) - s(x-1) = w <=> s(y) - s(x-1) <= w AND s(y) - s(x-1) >= w 로부터 유도된다.)
 // 2) 또 특정 지점 x는 0또는 1이기 때문에, 0 <= s(x) - s(x-1) <= 1 이 되고, 
 //    s(x) <= s(x-1) + 1 AND s(x-1) <= s(x) + 0 으로 나타낼 수 있다.
 // 3) 출발점은 0번 노드는 사용되기 때문에 노드 갯수 N개일때, N + 1을 출발점으로 잡는다. 도착점은 N이 된다.
