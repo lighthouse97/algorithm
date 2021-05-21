@@ -37,19 +37,11 @@ vector<int> g_matched;
 bool dfs(int from)
 {
 	for (int to : g_graph[from]) {
-		if (!g_visited[to] && !g_matched[to]) {
-			g_visited[to] = true;
+		if (g_visited[to]) continue;
+		else g_visited[to] = true;
+		if (g_matched[to] == 0 || dfs(g_matched[to])) {
 			g_matched[to] = from;
 			return true;
-		}
-	}
-	for (int to : g_graph[from]) {
-		if (!g_visited[to]) {
-			g_visited[to] = true;
-			if (!g_matched[to] || dfs(g_matched[to])) {
-				g_matched[to] = from;
-				return true;
-			}
 		}
 	}
 	return false;

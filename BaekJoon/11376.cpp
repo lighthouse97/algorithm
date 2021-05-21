@@ -33,19 +33,11 @@ int g_count = 0;
 bool dfs(int from)
 {
 	for (int to : g_graph[from]) {
-		if (!g_visited[to] && !g_matched[to]) {
-			g_visited[to] = true;
+		if (g_visited[to]) continue;
+		else g_visited[to] = true;
+		if (g_matched[to] == 0 || dfs(g_matched[to])) {
 			g_matched[to] = from;
 			return true;
-		}
-	}
-	for (int to : g_graph[from]) {
-		if (!g_visited[to]) {
-			g_visited[to] = true;
-			if (!g_matched[to] || dfs(g_matched[to])) {
-				g_matched[to] = from;
-				return true;
-			}
 		}
 	}
 	return false;
@@ -70,10 +62,11 @@ int main()
 		}
 	}
 
-	for (int i = 1; i < n + 1; i++) {
-		g_visited = vector<bool>(m + 1, false);
-		for (int j = 0; j < 2; j++)
+	for (int i = 1; i < n + 1; i++) {		
+		for (int j = 0; j < 2; j++) {
+			g_visited = vector<bool>(m + 1, false);
 			if (dfs(i)) g_count++;
-	}	
+		}
+	}
 	cout << g_count << "\n";
 }
