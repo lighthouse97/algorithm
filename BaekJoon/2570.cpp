@@ -9,6 +9,7 @@
 // 그리고 그룹을 구성할 때 대각선 방향으로 진행하다가 장애물이 나오면 동일 대각선상에서 그룹이 하나 더 증가한다. 장애물이 그룹을 분리시키는
 // 역할을 하게 되는 셈이다.
 // 대각선 방향에서 그룹을 구성하는 방법이 어려워서 시간이 많이 걸렸는데, 이것은 BOJ 2570 문제의 메모란에 따로 정리해 놓았다.
+// 그룹 만들 때 그룹 시작 위치가 장애물이면 그룹 카운트 하지 않고 장애물이 아닐 때 카운트 하도록 수정하였다.
 // 제한시간 1초 중 0ms(2,160KB)가 소요되었다.
 // 맞은사람 175/428로 상위 40.88%에 rank되었다.
 
@@ -77,9 +78,11 @@ int main()
 	bool gflag = false;
 	int g1cnt = 0;
 	for (int i = 1; i < 2 * N; i++) {
-		r = i; c = 1; gflag = false; g1cnt++; // 새로운 대각선, gcnt 증가
+		r = i; c = 1; gflag = false;
 		while (r >= 1 && c <= N) {
 			if (r <= N) {
+				if (i >= 1 && i <= N) { if (r == i && !chess[r][c].barrier) g1cnt++; } // 처음이 barrier이면 group count 않함!
+				else { if (r == N && !chess[r][c].barrier) g1cnt++; }
 				if (chess[r][c].barrier) { gflag = true; }
 				else {
 					if (gflag) { gflag = false; g1cnt++; }
@@ -93,9 +96,11 @@ int main()
 	// '\' 방향 그룹 생성
 	int g2cnt = 0;
 	for (int i = 1; i < 2 * N; i++) {
-		r = i, c = N; gflag = false; g2cnt++; // 새로운 대각선, gcnt 증가
+		r = i, c = N; gflag = false;
 		while (r >= 1 && c >= 1) {
 			if (r <= N) {
+				if (i >= 1 && i <= N) { if (r == i && !chess[r][c].barrier) g2cnt++; } // 처음이 barrier이면 group count 않함!
+				else { if (r == N && !chess[r][c].barrier) g2cnt++; }
 				if (chess[r][c].barrier) { gflag = true; }
 				else {
 					if (gflag) { gflag = false; g2cnt++; }
