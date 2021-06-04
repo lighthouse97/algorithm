@@ -1,5 +1,6 @@
 // 2787.cpp
 // 흔한 수열 문제
+// Contest > Croatian Open Competition in Informatics > COCI 2012/2013 > Contest #2 5번
 // 이분 매칭인데 이분 그래프 구성하는 방법을 몰라서 어떻게 풀었는지 참고하였다.
 // 알고 나면 간단한데 이거 알기가 너무 어렵다.
 // N개의 수열이 있으면 N*N개의 check[i][j]배열을 만든다.
