@@ -4,8 +4,14 @@
 // 간선의 도달 시간은 간선간 '거리 / 속도'로 구하는데 두 x, y 좌표간의 거리는 hypot() 함수를 이용한다.
 // 문제를 잘 읽어보면 살아남은 쥐가 아니라 잡아 먹히는 쥐를 구한다. 이거 제대로 안읽어서 WA 2번 발생했다!!!
 // '1348 주차장'문제 풀기 전에 먼저 풀어봐야 할 문제이다.
+// 실수가 있었다. 들쥐 - 구멍 시간 입력 부분에서 i, j loop만 있으면 되는데 실수로 i loop 밖에 i loop를 하나 더 넣고 돌렸다.
+// 우연찮게 AC는 났지만 쓸데없이 loop를 많이 돌려 수행 시간이 더 걸려 순위가 거의 꼴찌로 나왔다!!!
+// 이를 다시 바로 잡으니 시간이 16ms(2,176KB) -> 0ms(2,176KB) 으로 줄어들었다.
 // 제한시간 2초 중 16ms(2,176KB)가 소요되었다.
 // 맞은사람 291/314로 상위 92.67%에 rank되었다.
+// ---> 다시!!
+// 제한시간 2초 중 0ms(2,176KB)가 소요되었다.
+// 맞은사람 244/316로 상위 77.21%에 rank되었다.
 
 #include "pch.h"
 //#include <cstdio> // NULL
@@ -71,10 +77,8 @@ int main()
 	for (int i = 1; i < N + 1; i++) { cin >> x >> y; rat[i] = { x, y }; }// 들쥐 좌표 입력
 	for (int i = 1; i < M + 1; i++) { cin >> x >> y; hole[i] = { x, y }; }; // 구명 좌표 입력	
 	for (int i = 1; i < N + 1; i++) { // 들쥐 - 구멍 시간 입력
-		for (int i = 1; i < N + 1; i++) {
-			for (int j = 1; j < M + 1; j++)
-				g_time[i][j] = hypot(hole[j].x - rat[i].x, hole[j].y - rat[i].y) / V;
-		}
+		for (int j = 1; j < M + 1; j++)
+			g_time[i][j] = hypot(hole[j].x - rat[i].x, hole[j].y - rat[i].y) / V;
 	}
 	for (int i = 1; i < N + 1; i++) { // graph 만들기
 		for (int j = 1; j < M + 1; j++)
