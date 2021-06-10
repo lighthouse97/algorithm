@@ -149,7 +149,7 @@ int main()
 			if (g_time[i][j] < MAXNUM + 100) g_graph[i].push_back(j);
 	}
 
-	int left = 0, right = g_maxtime, mid; // ÀÌºÐ Å½»ö(upper_bound) & ÀÌºÐ Matching
+	int left = 0, right = g_maxtime, mid; // ÀÌºÐ Å½»ö(lower_bound) & ÀÌºÐ Matching
 	while (left < right) {
 		mid = (left + right) / 2;
 		if (match(mid) < g_carcnt) left = mid + 1; // ½Ã°£ ´Ã¸²
