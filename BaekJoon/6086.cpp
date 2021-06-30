@@ -1,16 +1,13 @@
 // 6086.cpp
 // 최대 유량
 // Olympiad > USA Computing Olympiad > 2008-2009 Season > USACO January 2009 Contest > Silver 2번
-// 전형적인 네트워크 플로우 문제이다.
-// Edmond-karp 알고리즘과 Dinic 알고리즘 중 Edmond-Karp 알고리즘을 사용하였다.
-// 치명적인 실수가 있었다!!!
-// 문제에서 파이프가 병렬로 중첩되면 용량을 합칠 수 있다고 하였다.
-// 이말은 같은 경로의 파이프가 여러개 올 수 있고 이런 경우는 그 때마다 파이프의 용량을 합쳐야 한다.
-// 따라서 경로의 capacity를 적용할 때 = 으로 할당하면 안되고, += 으로 누적시켜야 한다!!!
-// 이것을 몰라서 여러번 WA를 맞았다!!!
-// 문제마다 이 조건이 다르므로 문제를 잘 따져봐야 한다.(capacity를 = 인지, += 인지...)
-// 제한시간 1초 중 0ms(2,160KB)가 소요되었다.
-// 맞은사람 1074/1414로 상위 75.94%에 rank되었다.
+// 정점 사이에 간선이 양방향 또는 여러 개 있는 경우까지 고려한 표준 코드를 적용하였다.
+// g_graph에 간선 정보 및 flow, capacity 모두 다 때려넣고 구현한 방식이다.
+// 기존 방식 대비 수행 시간은 그대로이고 소요 메모리 사이즈는 약간 줄었다.
+// 이 방식으로 구현하면 같은 두 정점 사이에 간선이 여러 개 생겨도 생긴 만큼 중복해서 연결되기 때문에,
+// 기존 방식 처럼 용량(capacity)을 누적할 필요가 없고 그럴 고민을 할 필요도 없다!!!
+// 제한시간 1초 중 0ms(2,156KB)가 소요되었다.
+// 맞은사람 1080/1430로 상위 75.52%에 rank되었다.
 
 #include "pch.h"
 //#include <cstdio> // NULL
@@ -39,45 +36,61 @@ using namespace std;
 
 const int MAXVAL = 987654321;
 const int MAXN = 52;
-struct vertex {
-	int flo, cap;
-	vertex() : flo(0), cap(0) {}
-	vertex(int f, int c) : flo(f), cap(c) {}
+
+struct edge {
+	int to, flow, capa, revi;
+	edge() : to(-1), flow(0), capa(0), revi(-1) {}
+	edge(int t, int f, int c, int r) : to(t), flow(f), capa(c), revi(r) {}
+	bool space() { return capa > flow; }
 };
 
-vector<vector<int>> g_graph;
-vector<vector<vertex>> g_flow;
-vector<int> g_prev;
-int g_S, g_T; // source, sink, n count
+vector<vector<edge>> g_graph;
+int g_N, g_S, g_T; // source, sink, n count
 int g_maxFlow = 0;
+
+void addEdge(int from, int to, int flow, int capa)
+{
+	g_graph[from].push_back({ to, flow, capa, (int)g_graph[to].size() });
+	g_graph[to].push_back({ from, 0, 0, (int)g_graph[from].size() - 1 });
+}
 
 void edmond_karp()
 {
+	struct vt {
+		int num, index;
+		vt(int n, int i) : num(n), index(i) {}
+	};
+	vector<vt> prev;
 	while (true) {
-		g_prev.assign(MAXN, -1); // 시작하기 전에 prev를 모두 -1로 초기화시킨다.
+		prev.assign(g_N + 1, { -1, -1 }); // 시작하기 전에 prev를 모두 -1로 초기화시킨다.
 		queue<int> myq;
 		myq.push(g_S); // source -> queue
-		g_prev[g_S] = g_S;
+		prev[g_S].num = g_S;
 		int cur;
 		while (!myq.empty()) {
 			cur = myq.front();
 			myq.pop();
-			for (int next : g_graph[cur]) { // 이전에 방문하지 않아야 하고, 더 흘릴 flow가 있을 경우, 다음 정점으로 진행.
-				if (g_prev[next] == -1 && g_flow[cur][next].cap - g_flow[cur][next].flo > 0) {
-					g_prev[next] = cur;
-					myq.push(next);
+			for (int i = 0; i < g_graph[cur].size(); i++) {
+				edge& next = g_graph[cur][i];
+				if (prev[next.to].num == -1 && next.space()) { // 이전에 방문하지 않아야 하고, 더 흘릴 flow가 있을 경우, 다음 정점으로 진행.
+					prev[next.to].num = cur;
+					prev[next.to].index = i;
+					myq.push(next.to);
 				}
 			}
-			if (g_prev[g_T] != -1) break; // source -> sink까지 경로 찾았음!
+			if (prev[g_T].num != -1) break; // source -> sink까지 경로 찾았음!
 		}
-		if (g_prev[g_T] == -1) break; // source -> sink 까지 흐름이 없을 경우 flow를 다 찾은 경우이므로 더 찾을 필요 없다.
+		if (prev[g_T].num == -1) break; // source -> sink 까지 흐름이 없을 경우 flow를 다 찾은 경우이므로 더 찾을 필요 없다.
 
 		int minFlow = MAXVAL;
-		for (int i = g_T; i != g_S; i = g_prev[i]) // 잔여(residual)유량이 가장 작은 것으로만 통과 가능하다
-			minFlow = min(minFlow, g_flow[g_prev[i]][i].cap - g_flow[g_prev[i]][i].flo);
-		for (int i = g_T; i != g_S; i = g_prev[i]) {
-			g_flow[g_prev[i]][i].flo += minFlow; // 정방향은 flow 더해주고
-			g_flow[i][g_prev[i]].flo -= minFlow; // 역방향은 flow 빼준다
+		for (int i = g_T; i != g_S; i = prev[i].num) { // 잔여(residual)유량이 가장 작은 것으로만 통과 가능하다
+			edge& link = g_graph[prev[i].num][prev[i].index];
+			minFlow = min(minFlow, link.capa - link.flow);
+		}
+		for (int i = g_T; i != g_S; i = prev[i].num) {
+			edge& link = g_graph[prev[i].num][prev[i].index];
+			link.flow += minFlow; // 정방향은 flow 더해주고
+			g_graph[link.to][link.revi].flow -= minFlow; // 역방향은 flow 빼준다
 		}
 		g_maxFlow += minFlow;
 	}
@@ -96,25 +109,22 @@ int getIndex(char a)
 	return index;
 }
 
-int main() {
+int main()
+{
 	FAST;
 	int N;
 	cin >> N;
-	g_graph.resize(MAXN); // 대문자 26 + 소문자 26
-	g_flow.resize(MAXN, vector<vertex>(MAXN, { 0, 0 }));
-	g_prev.resize(MAXN, -1);
+	g_S = 0; g_T = 25; g_N = 52; // 26 + 26
+	g_graph.resize(g_N);
 	char a, b;
 	int c, from, to;
 	for (int i = 0; i < N; i++) {
 		cin >> a >> b >> c;
 		from = getIndex(a); // 알파벳을 인덱스로 변환한다.
 		to = getIndex(b);
-		g_graph[from].push_back(to);
-		g_graph[to].push_back(from);
-		g_flow[from][to].cap += c;
-		g_flow[to][from].cap += c;
+		addEdge(from, to, 0, c);
+		addEdge(to, from, 0, c); // 양방향 고려
 	}
-	g_S = 0; g_T = 25; // source : 'A', Sink : 'Z'
 	edmond_karp();
 	cout << g_maxFlow << "\n";
 }
