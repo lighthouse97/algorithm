@@ -7,11 +7,8 @@
 // 푸드 - sink 경로를 잡고 용량은 각 푸드별 용량을 준다.
 // 사람 - 푸드 경로를 잡고 용량은 1로 준다.
 // 그리고 Dinic 알고리즘으로 최대 유량을 구하면 된다.
-// --> 추가
-// 기존(legacy) 코드에서 정점 사이에 간선이 양방향 
-// 또는 여러 개 있는 경우까지 고려한 표준 코드를 적용하였다.
-// g_graph에 간선 정보 및 flow, capacity 모두 다 때려넣고 구현한 방식이다.
-// 0ms(3,084KB) --> 4ms(2,948KB) 소요되었다.
+// 제한시간 2초 중 0ms(3,084KB)가 소요되었다.
+// 맞은사람 17/231로 상위 7.35%에 rank되었다.
 
 #include "pch.h"
 //#include <cstdio> // NULL
@@ -39,27 +36,19 @@
 using namespace std;
 
 const int MAXVAL = 987654321;
-
-struct edge {
-	int to, flow, capa, revi;
-	edge() : to(-1), flow(0), capa(0), revi(-1) {}
-	edge(int t, int f, int c, int r) : to(t), flow(f), capa(c), revi(r) {}
-	bool space() { return capa > flow; }
+struct vertex {
+	int cap, flo; // capacity, Flow
+	vertex() : cap(0), flo(0) {}
+	vertex(int c, int f) : cap(c), flo(f) {}
 };
-
-vector<vector<edge>> g_graph;
+vector<vector<int>> g_graph;
+vector<vector<vertex>> g_flow;
 vector<int> g_level; // level graph
 vector<int> g_edge; // store next edge
 int g_S, g_T, g_N;
 int g_maxFlow = 0;
 
-void addEdge(int from, int to, int flow, int capa)
-{
-	g_graph[from].push_back({ to, flow, capa, (int)g_graph[to].size() });
-	g_graph[to].push_back({ from, 0, 0, (int)g_graph[from].size() - 1 });
-}
-
-bool bfs() // dinic bfs
+bool bfs()
 {
 	int cur;
 	queue<int> myq;
@@ -69,27 +58,27 @@ bool bfs() // dinic bfs
 	while (!myq.empty()) {
 		cur = myq.front();
 		myq.pop();
-		for (edge& next : g_graph[cur]) { // 다음 정점이 비어 있고, 잔여용량 > 0 이면,
-			if (g_level[next.to] == -1 && next.space()) {
-				g_level[next.to] = g_level[cur] + 1;
-				myq.push(next.to);
+		for (int next : g_graph[cur]) { // 다음 정점이 비어 있고, 잔여용량 > 0 이면,
+			if (g_level[next] == -1 && g_flow[cur][next].cap - g_flow[cur][next].flo > 0) {
+				g_level[next] = g_level[cur] + 1;
+				myq.push(next);
 			}
 		}
 	}
-	return (g_level[g_T] > -1); // sink까지 경로 만들어지면 return
+	return (g_level[g_T] > -1);
 }
 
-int dfs(int cur, int flow) // dinic dfs
+int dfs(int cur, int flow)
 {
 	int ret;
 	if (cur == g_T) return flow;
 	for (int& i = g_edge[cur]; i < g_graph[cur].size(); i++) {
-		edge& next = g_graph[cur][i];
-		if (g_level[next.to] == g_level[cur] + 1 && next.space()) {
-			ret = dfs(next.to, min(flow, next.capa - next.flow));
+		int next = g_graph[cur][i];
+		if (g_level[next] == g_level[cur] + 1 && g_flow[cur][next].cap - g_flow[cur][next].flo > 0) {
+			ret = dfs(next, min(flow, g_flow[cur][next].cap - g_flow[cur][next].flo));
 			if (ret > 0) {
-				next.flow += ret;
-				g_graph[next.to][next.revi].flow -= ret; // 유량의 대칭성
+				g_flow[cur][next].flo += ret;
+				g_flow[next][cur].flo -= ret; // 유량의 대칭성
 				return ret;
 			}
 		}
@@ -119,20 +108,28 @@ int main()
 	g_T = N + D + 1;
 	g_N = g_T + 1; // g_T + source
 	g_graph.resize(g_N + 1);
+	g_flow.resize(g_N + 1, vector<vertex>(g_N + 1, { 0, 0 }));
 
-	for (int i = 1; i < N + 1; i++) // source - man(cap = K)
-		addEdge(g_S, i, 0, K);
+	for (int i = 1; i < N + 1; i++) { // source - man(cap = K)
+		g_graph[g_S].push_back(i);
+		g_graph[i].push_back(g_S);
+		g_flow[g_S][i].cap = K;
+	}
 	int fc, fs = N; // food start = N
 	for (int i = 1; i < D + 1; i++) { // food - sink(cap = each D)
 		cin >> fc;
-		addEdge(i + fs, g_T, 0, fc);
+		g_graph[i + fs].push_back(g_T);
+		g_graph[g_T].push_back(i + fs);
+		g_flow[i + fs][g_T].cap = fc;
 	}
 	int fcnt, food;
 	for (int i = 1; i < N + 1; i++) { // man - food (cap = 1)
 		cin >> fcnt;
 		for (int j = 1; j < fcnt + 1; j++) {
 			cin >> food;
-			addEdge(i, food + fs, 0, 1);
+			g_graph[i].push_back(food + fs);
+			g_graph[food + fs].push_back(i);
+			g_flow[i][food + fs].cap = 1;
 		}
 	}
 	dinic();
