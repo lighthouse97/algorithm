@@ -1,5 +1,6 @@
 // 1210.cpp
 // 마피아
+// Olympiad > Baltic Olympiad in Informatics > BOI 2008 0번
 // Network Flow, Maximum Flow Minumum Cut
 // 정점 분리
 // 여기까지는 쉬운데, maximum flow를 구한 다음에 막는 점을 찾는것이 아주 어렵다.
