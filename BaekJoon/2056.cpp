@@ -9,6 +9,8 @@
 // 2) 이들 마지막 정점의 누적 시간을 합하면 WA이고, 이들 중 가장 큰 값을 찾아야 한다!!!
 // 제한시간 2초 중 84ms(5,984KB)가 소요되었다.
 // 맞은사람 546/2321로 상위 23.52%에 rank되었다.
+// 아주 약간 개선하여 80ms(5,984KB), 505/2321로 21.75% rank되었다.
+
 
 #include "pch.h"
 //#include <cstdio> // NULL
@@ -80,8 +82,7 @@ int main() {
 	}
 	topological_sort();
 	int answer = 0;
-	for (int i = 1; i < g_N + 1; i++) {
-		if (!g_graph[i].size()) answer = max(answer, g_answer[i]);
-	}
+	for (int i = 1; i < g_N + 1; i++)
+		answer = max(answer, g_answer[i]);
 	cout << answer << "\n";
 }
