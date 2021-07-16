@@ -69,7 +69,7 @@ int main()
 	int N, M;
 	cin >> N >> M;
 	g_graph.resize(N + 1);
-	g_degree.resize(N + 1);
+	g_degree.resize(N + 1, 0);
 	g_parts.resize(N + 1, vector<int>(N + 1, 0));
 	g_N = N;
 	int x, y, k;
