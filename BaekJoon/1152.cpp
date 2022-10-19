@@ -1,33 +1,38 @@
 // 1152.cpp
+// 단어의 개수
+// 문자열 split 함수를 만들어서 처리하였다.
+// 11,848KB에 16ms 걸렸다.
 
 #include "pch.h"
-
-#ifdef _MSC_VER
-#define _CRT_SECURE_NO_WARNINGS
-#endif
 #include <iostream>
-#include <cstdio>
-#include <cstring> // strtok
-#include <vector>
 #include <string>
+#include <vector>
+#include <sstream>
+#define FAST ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
 
 using namespace std;
 
+vector<string> split(string input, char delimiter)
+{
+	vector<string> words;
+	stringstream ss(input);
+	string temp;
+
+	while (getline(ss, temp, delimiter)) {
+		if (!temp.empty()) words.push_back(temp);
+	}
+
+	return words;
+}
+
 int main()
 {
-	char str[1000000];
-	char* token;
-	vector<string> token_list;
+	FAST;
 
-	for (int i = 0; i < 1000000; i++)
-		str[i] = 0;
+	string input_string;
+	vector<string> words;
 
-	if (fgets(str, 1000000, stdin) != NULL) {
-		token = strtok(str, " ");
-		while (token != NULL) {
-			if(token[0] != '\n') token_list.push_back(token);
-			token = strtok(NULL, " ");
-		}
-		printf("%d\n", token_list.size());
-	}
+	getline(cin, input_string);
+	words = split(input_string, ' ');
+	cout << words.size() << '\n';
 }
